@@ -19,45 +19,45 @@ export const App = () => {
   const [idForModal, setIdForModal] = useState(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [totalPages, setTotalPages] = useState(null);
   const [btn, setBtn] = useState(false);
 
   useEffect(() => {
-    async function fetchData() {
-      const images = await GetImg(searchQuery);
-      setImages(images.hits);
-      setLoading(false);
-      setTotalPages(Math.ceil(images.totalHits / 12));
-      if (images.hits.length === 0) {
-        Notify.failure(
-          'Sorry, there are no images matching your search query. Please try again'
-        );
-        return;
-      }
+    if (searchQuery === '') {
+      return;
     }
-    if (searchQuery !== '') {
-      fetchData();
-    }
-  }, [searchQuery]);
-
-  useEffect(() => {
-    if (page !== 1) {
-      if (totalPages < page) {
-        setBtn(true);
-        Notify.failure('This is the END');
-        return;
-      }
-      setLoading(true);
-      async function moreFetch() {
+    async function firstFetchData(searchQuery, page) {
+      try {
+        setLoading(true);
         const images = await GetImg(searchQuery, page);
-        setLoading(false);
-        setImages(prevState => {
-          return prevState.concat(images.hits);
+        const totalPages = Math.ceil(images.totalHits / 12);
+        if (images.hits.length === 0) {
+          Notify.failure(
+            'Sorry, there are no images matching your search query. Please try again'
+          );
+          return;
+        }
+        if (page >= totalPages) {
+          setBtn(true);
+          setLoading(false);
+          Notify.failure('This is the END');
+        }
+        const FilterDateOfImages = images.hits.map(image => {
+          return {
+            id: image.id,
+            tags: image.tags,
+            webformatURL: image.webformatURL,
+            largeImageURL: image.largeImageURL,
+          };
         });
+        setImages(prevState => [...prevState, ...FilterDateOfImages]);
+      } catch (error) {
+        throw new Error(error);
+      } finally {
+        setLoading(false);
       }
-      moreFetch();
     }
-  }, [page, searchQuery, totalPages]);
+    firstFetchData(searchQuery, page);
+  }, [page, searchQuery]);
 
   const onClick = values => {
     setIsModalOpen(!isModalOpen);
@@ -73,11 +73,10 @@ export const App = () => {
       Notify.failure('Enter something');
       return;
     }
-    setSearchQuery(values.searchQuery);
-    setLoading(true);
+    setSearchQuery(prev => values.searchQuery);
+    setImages([]);
     setBtn(false);
     setPage(1);
-    setTotalPages(null);
   };
 
   return (
@@ -99,3 +98,57 @@ export const App = () => {
     </AppWrap>
   );
 };
+
+// useEffect(() => {
+//   let totalPages;
+//   console.log(totalPages);
+//   if (totalPages < page) {
+//     setBtn(true);
+//     setLoading(false);
+//     Notify.failure('This is the END');
+//     return;
+//   }
+//   async function firstFetchData() {
+//     const images = await GetImg(searchQuery);
+//     totalPages = Math.ceil(images.totalHits / 12);
+
+//     const FilterDateOfImages = images.hits.map(image => {
+//       return {
+//         id: image.id,
+//         tags: image.tags,
+//         webformatURL: image.webformatURL,
+//         largeImageURL: image.largeImageURL,
+//       };
+//     });
+//     setImages(FilterDateOfImages);
+//     setLoading(false);
+//     if (images.hits.length === 0) {
+//       Notify.failure(
+//         'Sorry, there are no images matching your search query. Please try again'
+//       );
+//       return;
+//     }
+//   }
+//   if (searchQuery !== '' && page === 1) {
+//     firstFetchData();
+//   }
+//   if (page !== 1) {
+//     setLoading(true);
+//     async function nextFetchData() {
+//       const images = await GetImg(searchQuery, page);
+//       const FilterDateOfImages = images.hits.map(image => {
+//         return {
+//           id: image.id,
+//           tags: image.tags,
+//           webformatURL: image.webformatURL,
+//           largeImageURL: image.largeImageURL,
+//         };
+//       });
+//       setLoading(false);
+//       setImages(prevState => {
+//         return prevState.concat(FilterDateOfImages);
+//       });
+//     }
+//     nextFetchData();
+//   }
+// }, [page, searchQuery]);
