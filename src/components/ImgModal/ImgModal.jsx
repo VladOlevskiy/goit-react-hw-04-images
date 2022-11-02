@@ -1,18 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-export const ImgModal = ({ images, CurrentId }) => {
-  const idCurrentImageForModal = Number(CurrentId);
-  let largeImageURL;
-  let imgTeg;
-  images.forEach(image => {
-    if (image.id === idCurrentImageForModal) {
-      return (
-        (largeImageURL = `${image.largeImageURL}`), (imgTeg = `${image.tags}`)
-      );
-    }
-  });
-  return <img src={largeImageURL} width="800px" alt={imgTeg}></img>;
+export const ImgModal = ({ data }) => {
+  return <img src={data.url} width="800px" alt={data.alt}></img>;
 };
 
 ImgModal.propTypes = {

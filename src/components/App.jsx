@@ -1,6 +1,6 @@
 import React from 'react';
 import { Searchbar } from './Searchbar/Searchbar';
-import { GetImg } from '../services/Api';
+import { getImg } from '../services/Api';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { ImageGalleryItem } from './ImageGalleryItem/ImageGalleryItem';
 import { AppWrap } from './App-styled';
@@ -16,10 +16,10 @@ export const App = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [images, setImages] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [idForModal, setIdForModal] = useState(null);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [btn, setBtn] = useState(false);
+  const [modalData, setModalData] = useState(null);
 
   useEffect(() => {
     if (searchQuery === '') {
@@ -28,7 +28,7 @@ export const App = () => {
     async function firstFetchData(searchQuery, page) {
       try {
         setLoading(true);
-        const images = await GetImg(searchQuery, page);
+        const images = await getImg(searchQuery, page);
         const totalPages = Math.ceil(images.totalHits / 12);
         if (images.hits.length === 0) {
           Notify.failure(
@@ -41,7 +41,7 @@ export const App = () => {
           setLoading(false);
           Notify.failure('This is the END');
         }
-        const FilterDateOfImages = images.hits.map(image => {
+        const filterDateOfImages = images.hits.map(image => {
           return {
             id: image.id,
             tags: image.tags,
@@ -49,7 +49,7 @@ export const App = () => {
             largeImageURL: image.largeImageURL,
           };
         });
-        setImages(prevState => [...prevState, ...FilterDateOfImages]);
+        setImages(prevState => [...prevState, ...filterDateOfImages]);
       } catch (error) {
         throw new Error(error);
       } finally {
@@ -59,9 +59,9 @@ export const App = () => {
     firstFetchData(searchQuery, page);
   }, [page, searchQuery]);
 
-  const onClick = values => {
-    setIsModalOpen(!isModalOpen);
-    setIdForModal(values);
+  const toggleModal = modalData => {
+    setIsModalOpen(prev => !prev);
+    setModalData(modalData ? modalData : null);
   };
 
   const loadMore = () => {
@@ -85,70 +85,14 @@ export const App = () => {
       {loading && <Loader />}
       {images.length > 0 && (
         <ImageGallery
-          item={<ImageGalleryItem images={images} onClick={onClick} />}
+          item={<ImageGalleryItem images={images} onClick={toggleModal} />}
         />
       )}
       {isModalOpen && (
-        <Modal onClose={onClick}>
-          {<ImgModal images={images} CurrentId={idForModal} />}
-        </Modal>
+        <Modal onClose={toggleModal}>{<ImgModal data={modalData} />}</Modal>
       )}
       {loading && images.length > 0 && <Loader />}
       {images.length > 0 && !loading && !btn && <Button onClick={loadMore} />}
     </AppWrap>
   );
 };
-
-// useEffect(() => {
-//   let totalPages;
-//   console.log(totalPages);
-//   if (totalPages < page) {
-//     setBtn(true);
-//     setLoading(false);
-//     Notify.failure('This is the END');
-//     return;
-//   }
-//   async function firstFetchData() {
-//     const images = await GetImg(searchQuery);
-//     totalPages = Math.ceil(images.totalHits / 12);
-
-//     const FilterDateOfImages = images.hits.map(image => {
-//       return {
-//         id: image.id,
-//         tags: image.tags,
-//         webformatURL: image.webformatURL,
-//         largeImageURL: image.largeImageURL,
-//       };
-//     });
-//     setImages(FilterDateOfImages);
-//     setLoading(false);
-//     if (images.hits.length === 0) {
-//       Notify.failure(
-//         'Sorry, there are no images matching your search query. Please try again'
-//       );
-//       return;
-//     }
-//   }
-//   if (searchQuery !== '' && page === 1) {
-//     firstFetchData();
-//   }
-//   if (page !== 1) {
-//     setLoading(true);
-//     async function nextFetchData() {
-//       const images = await GetImg(searchQuery, page);
-//       const FilterDateOfImages = images.hits.map(image => {
-//         return {
-//           id: image.id,
-//           tags: image.tags,
-//           webformatURL: image.webformatURL,
-//           largeImageURL: image.largeImageURL,
-//         };
-//       });
-//       setLoading(false);
-//       setImages(prevState => {
-//         return prevState.concat(FilterDateOfImages);
-//       });
-//     }
-//     nextFetchData();
-//   }
-// }, [page, searchQuery]);

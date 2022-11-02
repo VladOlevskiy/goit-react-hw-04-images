@@ -6,20 +6,12 @@ import {
 import PropTypes from 'prop-types';
 
 export const ImageGalleryItem = ({ images, onClick }) => {
-  const handleClick = evt => {
-    const idCurrent = evt.currentTarget.getAttribute('data-key');
-    onClick(idCurrent);
-  };
-
   return (
     <>
       {images.map(image => {
+        const modalData = { alt: image.tags, url: image.largeImageURL };
         return (
-          <ImageGalleryLi
-            data-key={image.id}
-            key={image.id}
-            onClick={handleClick}
-          >
+          <ImageGalleryLi key={image.id} onClick={() => onClick(modalData)}>
             <ImageGalleryItemImage src={image.webformatURL} alt="" />
           </ImageGalleryLi>
         );
